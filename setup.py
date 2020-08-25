@@ -14,7 +14,7 @@ setup(name='tropycal_model_hack',
       keywords=['tropycal', 'model', 'hack'],
       entry_points={
           'console_scripts': [
-              'plot_cone = tropycal_model_hack.main:plot_forecast_cone'
+              'plot_cone = tropycal_model_hack.main:cli'
           ]
       },
       zip_safe=True)
