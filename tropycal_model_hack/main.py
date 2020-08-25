@@ -1,6 +1,9 @@
+import argparse
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import tropycal.tracks as tracks
+
 
 COLUMNS = ['basin', 'number', 'init', 'technum', 'tech', 'tau',
            'lat', 'lon', 'vmax', 'mslp', 'level', 'rad', 'windcode', 'rad1',
@@ -21,7 +24,7 @@ def _scale_lat_lon(df, col, endswith):
     return df
 
 
-def plot_forecast_cone(in_fp, out_fp, storm_label):
+def plot_forecast_cone(in_fp, out_fp, storm_label=None):
     """
     Repopulate tropycal storm dict with local model data; then
     invoke plot_nhc_forecast and outputs a TC track cone forecast figure.
@@ -29,7 +32,7 @@ def plot_forecast_cone(in_fp, out_fp, storm_label):
     Args:
         in_fp (str) - input filepath
         out_fp (str) - output filepath
-        storm_label (str) - storm label
+        storm_label (str) - storm label; if not provided, use default tech
     """
 
     # read nhc data for prepopulation
@@ -64,7 +67,10 @@ def plot_forecast_cone(in_fp, out_fp, storm_label):
         'technum': 'operational_id',
         'tau': 'fhr'
     })
-    df['name'] = storm_label
+    if storm_label is not None:
+        df['name'] = storm_label
+    else:
+        df['name'] = df['id']
 
     # replace values
     for key in storm.dict:
@@ -93,3 +99,17 @@ def plot_forecast_cone(in_fp, out_fp, storm_label):
 
     ax = storm.plot_nhc_forecast(0, return_ax=True)
     plt.savefig(out_fp)
+
+
+def cli():
+    parser = argparse.ArgumentParser(
+        description="""
+            Output a tropical cyclone forecast cone figure.
+        """
+    )
+    parser.add_argument('in_fp', type=str, help='input filepath')
+    parser.add_argument('out_fp', type=str, help='output filepath')
+    parser.add_argument('storm_label', type=str, help='label of storm',
+                        nargs='?', const=None, default=None)
+    kwargs = vars(parser.parse_args())
+    plot_forecast_cone(**kwargs)
