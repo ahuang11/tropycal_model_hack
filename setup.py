@@ -8,6 +8,7 @@ setup(name='tropycal_model_hack',
       include_package_data=True,
       install_requires=[
                         'pandas',
+                        'matplotlib',
                         'tropycal',
                         ],
       keywords=['tropycal', 'model', 'hack'],
