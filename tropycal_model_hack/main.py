@@ -1,5 +1,8 @@
 import argparse
 
+import matplotlib
+matplotlib.use('agg')
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import tropycal.tracks as tracks
