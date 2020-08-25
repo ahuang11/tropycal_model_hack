@@ -73,7 +73,7 @@ def plot_forecast_cone(in_fp, out_fp, storm_label=None):
     if storm_label is not None:
         df['name'] = storm_label
     else:
-        df['name'] = df['id']
+        df['name'] = 'CTACZ'
 
     # replace values
     for key in storm.dict:
