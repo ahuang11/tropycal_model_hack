@@ -1,3 +1,5 @@
+import os
+import pickle
 import argparse
 
 import matplotlib
@@ -13,6 +15,8 @@ COLUMNS = ['basin', 'number', 'init', 'technum', 'tech', 'tau',
            'rad2', 'rad3', 'rad4', 'radp', 'rrp', 'mrd', 'gusts', 'eye',
            'subregion', 'maxseas', 'initials', 'dir', 'speed', 'stormname',
            'depth', 'seas', 'seascode', 'seas1', 'seas2', 'seas3', 'seas4']
+DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
+CACHED_FP = os.path.join(DATA_DIR, 'storm.pkl')
 
 
 def _scale_lat_lon(df, col, endswith):
@@ -37,12 +41,18 @@ def plot_forecast_cone(in_fp, out_fp, storm_label=None):
         out_fp (str) - output filepath
         storm_label (str) - storm label; if not provided, use default tech
     """
-
-    # read nhc data for prepopulation
-    hurdat_atl = tracks.TrackDataset(
-        basin='north_atlantic', source='hurdat',
-        include_btk=False)
-    storm = hurdat_atl.get_storm(('michael', 2018))
+    try:
+        with open(CACHED_FP, 'rb') as f:
+            storm = pickle.load(f)
+    except Exception as e:
+        print(e)
+        # read nhc data for prepopulation
+        hurdat_atl = tracks.TrackDataset(
+            basin='north_atlantic', source='hurdat',
+            include_btk=False)
+        storm = hurdat_atl.get_storm(('michael', 2018))
+        with open(CACHED_FP, 'wb') as f:
+            pickle.dump(storm, f)
 
     # read local data, rename, and create cols
     df = pd.read_csv(in_fp, header=None, names=COLUMNS)
@@ -73,7 +83,7 @@ def plot_forecast_cone(in_fp, out_fp, storm_label=None):
     if storm_label is not None:
         df['name'] = storm_label
     else:
-        df['name'] = 'CTACZ'
+        df['name'] = df['id']
 
     # replace values
     for key in storm.dict:
