@@ -110,7 +110,10 @@ def plot_forecast_cone(in_fp, out_fp, storm_label=None):
     # to use plot_nhc_forecast CARQ is expected
     storm.forecast_dict['CARQ'] = storm.forecast_dict['OFCL']
 
-    ax = storm.plot_nhc_forecast(0, return_ax=True)
+    try:
+        ax = storm.plot_nhc_forecast(0, return_ax=True)
+    except:
+        ax = storm.plot(return_ax=True)
     plt.savefig(out_fp)
 
 
