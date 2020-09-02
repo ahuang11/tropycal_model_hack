@@ -33,7 +33,7 @@ def _scale_lat_lon(df, col, endswith):
     return df
 
 
-def plot_global_tracks(track_filenames, output_image):
+def plot_global_tracks(track_filenames, output_image, tag):
     fig = plt.figure(figsize=(10, 6))
     ax = plt.axes(projection=ccrs.PlateCarree())
     for in_fp in track_filenames:
@@ -57,6 +57,10 @@ def plot_global_tracks(track_filenames, output_image):
                 _ = ax.plot(df_group['lon'], df_group['lat'], c='gray',
                             transform=ccrs.PlateCarree())
     ax.set_ylim(-60, 60)
+    if tag:
+        ax.text(-180, -60, tag, ha='left', va='bottom',
+                transform=ccrs.PlateCarree(),
+                color='white')
     ax.background_img(name='BM', resolution='high')
     plt.savefig(output_image, bbox_inches='tight', pad_inches=0)
 
@@ -169,6 +173,8 @@ def plot_global_tracks_cli():
         """
     )
     parser.add_argument('-o', '--output_image', type=str, help='output image')
+    parser.add_argument('-t', '--tag', type=str,
+                        help='label on the bottom left')
     parser.add_argument('track_filenames', nargs='+',
                         help='track filenames')
     kwargs = vars(parser.parse_args())
