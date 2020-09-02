@@ -1,4 +1,5 @@
 import os
+import glob
 import pickle
 import argparse
 
@@ -6,6 +7,7 @@ import matplotlib
 matplotlib.use('agg')
 
 import pandas as pd
+import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import tropycal.tracks as tracks
 
@@ -29,6 +31,34 @@ def _scale_lat_lon(df, col, endswith):
         df.loc[idx, col].str[:-1]  # strip the one letter (N/S/E/W)
         .astype(float) * scaler)
     return df
+
+
+def plot_global_tracks(track_filenames, output_image):
+    fig = plt.figure(figsize=(10, 6))
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    for in_fp in track_filenames:
+        # read local data, rename, and create cols
+        df = pd.read_csv(in_fp, header=None, names=COLUMNS)
+        df = df.drop_duplicates(['init', 'tech', 'tau'], keep='first')
+        latlon_dirs = [('lat', 'N'), ('lat', 'S'),
+                       ('lon', 'E'), ('lon', 'W')]
+        for latlon, endswith in latlon_dirs:
+            df = _scale_lat_lon(df, latlon, endswith)
+        for tech, df_group in df.groupby('tech'):
+            if tech == ' C00Z':
+                _ = ax.plot(df_group['lon'], df_group['lat'], c='whitesmoke',
+                            transform=ccrs.PlateCarree(), zorder=10)
+                df_subset = df_group.loc[df_group['vmax'] > 64]
+                if len(df_subset):
+                    _ = ax.plot(
+                        df_subset['lon'], df_subset['lat'], c='red',
+                        transform=ccrs.PlateCarree(), zorder=20)
+            else:
+                _ = ax.plot(df_group['lon'], df_group['lat'], c='gray',
+                            transform=ccrs.PlateCarree())
+    ax.set_ylim(-60, 60)
+    ax.background_img(name='BM', resolution='high')
+    plt.savefig(output_image, bbox_inches='tight', pad_inches=0)
 
 
 def plot_forecast_cone(in_fp, out_fp, storm_label=None):
@@ -84,6 +114,7 @@ def plot_forecast_cone(in_fp, out_fp, storm_label=None):
         df['name'] = storm_label
     else:
         df['name'] = df['id']
+    print(storm.dict)
 
     # replace values
     for key in storm.dict:
@@ -109,15 +140,15 @@ def plot_forecast_cone(in_fp, out_fp, storm_label=None):
 
     # to use plot_nhc_forecast CARQ is expected
     storm.forecast_dict['CARQ'] = storm.forecast_dict['OFCL']
-
+    
     try:
         ax = storm.plot_nhc_forecast(0, return_ax=True)
-    except:
+    except Exception as e:
         ax = storm.plot(return_ax=True)
     plt.savefig(out_fp)
 
 
-def cli():
+def plot_forecast_cone_cli():
     parser = argparse.ArgumentParser(
         description="""
             Output a tropical cyclone forecast cone figure.
@@ -129,3 +160,16 @@ def cli():
                         nargs='?', const=None, default=None)
     kwargs = vars(parser.parse_args())
     plot_forecast_cone(**kwargs)
+
+
+def plot_global_tracks_cli():
+    parser = argparse.ArgumentParser(
+        description="""
+            Output a global tropical cyclone forecast figure.
+        """
+    )
+    parser.add_argument('-o', '--output_image', type=str, help='output image')
+    parser.add_argument('track_filenames', nargs='+',
+                        help='track filenames')
+    kwargs = vars(parser.parse_args())
+    plot_global_tracks(**kwargs)
